@@ -1,0 +1,68 @@
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : 0_README_mTDR-1.2
+%* Date created  : 2007, January 3
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     :
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2007 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+
+This is the README file for the Matlab TDR System, Version 1.2.
+Release date: 2007, January 3
+
+See tdr/tdrhelp.txt for further information.
+
+A file listing of this Revision can be seen in file ls-alR .
+
+
+List of changes from Rev. 1.1 to Rev. 1.2
+ - We implement the discretisation of the transport terms also for space
+   dependent taxis or diffusion functions, in particular if the type of the
+   transport function is DependsS or DependsSU (for the reaction function this
+   has been possible already). We do not need to provide the x- and
+   y-coordinates explicitly to ProbFTrans.m but instead add two parameters
+   at the end of the argument list when calling ProbFTrans.m from
+   tdr/tdrDiff.m, and tdr/tdrTaxis.m :
+    (1) the patchId for which the transport function is to be evaluated, and
+    (2) an 'x' if the transport function is to be evaluated on ALL left and
+        right faces (!) of patchId or a 'y' if it is to be evaluated on ALL
+        top and bottom faces of patchId. 
+   Affected files are: tdr/tdrDiff.m, and 
+                       tdr/tdrTaxis.m .
+
+List of changes from Rev. 1.0 to Rev. 1.1
+ - corrected computation of radial derivatives in axisymmetric case. This was
+   incorrect in Rev. 1.0! 
+   Affected files are: tdr/tdrComputeFaceData.m,
+                       tdr/tdrDiff.m, and 
+                       tdr/tdrTaxis.m .
+ - added parameter inputStruct.params.rcells in model
+   tdrExamples/DiffReac/ProbGetParams.m 
+
+
+
+==============================================================================
+Commands for creating the ls-alR file (to be executed one directory above 
+the mTDR-version directory):
+
+version="mTDR-1.2"
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+
+to check
+ls -alR ${version} > /tmp/ls-alR.chk
+diff /tmp/ls-alR.chk ${version}/ls-alR
+rm /tmp/ls-alR.chk
+

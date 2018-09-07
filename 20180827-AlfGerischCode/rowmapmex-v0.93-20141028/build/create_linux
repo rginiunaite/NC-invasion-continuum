@@ -1,0 +1,113 @@
+#!/bin/sh
+
+# create_linux [logfilename]
+# 
+# Creates the Matlab mex-file for the Matlab-ROWMAP interface.
+#
+# stdout and stderr are shown and additionally stored in the  
+# file logfilename (which is overwritten when already existent). 
+# When no logfilename is supplied in the call then we create one 
+# involving the current hostname, the current matlab version, the
+# current mex-extension, and a time stamp. The same information is 
+# used to create the filename for the ROWMAP mex-interface. 
+#
+
+# set to where the ROWMAP mex-interface source file can be found
+SRCDIR="../src"
+
+# generate the ROWMAP mex-interface in the current directory
+BINDIR="."
+
+# extract hostname and MATLAB information from the system
+curHostName=$(hostname -s)
+MATLABROOT=$(matlab -e|grep '^MATLAB='|cut -d '=' -f 2)
+#MATLABVERSION=$(matlab -nojvm -nosplash -r 'exit'|grep Version|cut -d '(' -f 2|cut -d ')' -f 1)
+MATLABVERSION=$(matlab -nojvm -nosplash -r 'exit'|grep R20 | tr -s ' '|cut -d ' ' -f 2)
+curMexExt=$($MATLABROOT/bin/mexext)
+timestamp=$(date +%Y%m%d__%H_%M_%S)
+
+# set the log file name
+if test -z $1 ; then
+ logfile="./create_linux__${curHostName}_Matlab${MATLABVERSION}_${curMexExt}_${timestamp}.log"
+else
+ logfile=$1
+fi
+# set the name of the generated mex-interface 
+ROWMAPoutfile="rowmap__${curHostName}_Matlab${MATLABVERSION}_${timestamp}"
+
+# set the name of the mexopts file to use
+#curMexOptFile=$(echo ./MexOptsFiles/mexopts_${curHostName}_Matlab${MATLABVERSION}_${curMexExt}.sh)
+
+tee ${logfile} << EOF
+-------------------------------------------------------------
+create_linux (current time stamp ${timestamp})
+ ...
+ ... we are running on          $curHostName
+ ... using MATLABROOT directory $MATLABROOT
+ ... building                   $ROWMAPoutfile.$curMexExt
+ ... and storing output in      $logfile
+
+EOF
+# ... using mexopts file         $curMexOptFile
+
+if [ -f $curMexOptFile ] ; then
+  # mexopts file is present
+  true
+else
+  tee -a ${logfile} << EOF
+  
+... ... Required mexopts file NOT found. 
+... ... Please create the required file using one of the 
+... ... files in the subdirectory MexOptsFiles as template.
+... ...
+... ... Exit(1).
+
+EOF
+  exit 1
+fi
+
+
+tee -a ${logfile} << EOF
+
+ ... First build the fortran object rowmap.o using
+ ...  ... gfortran -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"$MATLABROOT/extern/include" -I"$MATLABROOT/simulink/include" -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG ${SRCDIR}/rowmap.F -o rowmap.o
+
+EOF
+gfortran -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"$MATLABROOT/extern/include" -I"$MATLABROOT/simulink/include" -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG ${SRCDIR}/rowmap.F -o rowmap.o
+
+tee -a ${logfile} << EOF
+
+ ... Now build the ROWMAP-mex-Interface
+
+EOF
+#   to see all commands but don't execute use -n
+#   to see all variables and commands and execute them use -v 
+$MATLABROOT/bin/mex \
+                    -v                  \
+                    -largeArrayDims     \
+                    -lmwblas            \
+                    -lgfortran          \
+                    -output ${ROWMAPoutfile}    \
+                    ${SRCDIR}/rowmapM.c         \
+                    ${SRCDIR}/options.c         \
+                    ./rowmap.o          \
+                    2>&1 | tee -a ${logfile}
+
+#                    -f ${curMexOptFile} \
+#                    -largeArrayDims     \
+#                    -compatibleArrayDims \
+#                    FFLAGS='$FFLAGS -cpp'       \
+
+# remove rowmap.o
+rm ./rowmap.o
+
+tee -a ${logfile} << EOF
+
+ ... Done.
+-------------------------------------------------------------
+EOF
+
+# copy the just generated mex file to a shorter file name
+cp -p ${ROWMAPoutfile}.${curMexExt} ${BINDIR}/rowmap.${curMexExt}
+cp -p ${ROWMAPoutfile}.${curMexExt} ../rowmap/rowmap.${curMexExt}
+

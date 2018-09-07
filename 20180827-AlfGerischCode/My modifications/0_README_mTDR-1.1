@@ -1,0 +1,50 @@
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : 0_README_mTDR-1.1
+%* Date created  : 2006, June 8
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     :
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2006 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+
+This is the README file for the Matlab TDR System, Version 1.1.
+Release date: 2006 , June 8.
+
+See tdr/tdrhelp.txt for further information.
+
+A file listing of this Revision can be seen in file ls-alR .
+
+List of changes from Rev. 1.0 to Rev 1.1
+ - corrected computation of radial derivatives in axisymmetric case. This was
+   incorrect in Rev. 1.0! Affected files are tdr/tdrComputeFaceData.m,
+   tdr/tdrDiff.m, and tdr/tdrTaxis.m .
+ - added parameter inputStruct.params.rcells in model
+   tdrExamples/DiffReac/ProbGetParams.m 
+
+
+
+==============================================================================
+Commands for creating the ls-alR file (to be executed one directory above 
+the mTDR-version directory):
+
+version="mTDR-1.1"
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+
+to check
+ls -alR ${version} > /tmp/ls-alR.chk
+diff /tmp/ls-alR.chk ${version}/ls-alR
+rm /tmp/ls-alR.chk
+

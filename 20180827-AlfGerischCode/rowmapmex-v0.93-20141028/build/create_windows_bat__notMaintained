@@ -1,0 +1,72 @@
+@echo off
+
+goto start
+
+:pfade
+rem %%%% Adjust Paths in the following two lines:
+set wcpath=C:\Programme\watcom
+set matlabpath=C:\Programme\MATLAB\R2006b
+rem %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+set watcom=%wcpath%
+set path=%wcpath%\binnt;%wcpath%\binw;%path%
+set include=%wcpath%\H;%wcpath%\H\nt;%include%
+set lib=%wcpath%\lib386\nt;%wcpath%\lib386;%lib%
+set wcopt=-c -mf -za -wx -d0 -ox -bd -bt=nt -6s -ei -fpi87 -fp6 -zp8 -fr# -DMATLAB_MEX_FILE -DNDEBUG
+set wfopt=-c -mf -ox -d0 -bd -sc -6 -fpi87
+set lnklib=libpath %matlabpath%\extern\lib\win32\watcom library libmx.lib,libmex.lib,libmat.lib,user32.lib
+set matlabinclude=-i="%matlabpath%\extern\include"
+goto compile
+
+
+
+:start
+if not "%wcpath%"=="" goto compile
+goto pfade
+
+
+
+:compile
+rem FORTRAN FILES
+wfl386 %wfopt% src\rowmap.f
+echo .
+wfl386 %wfopt% src\winextra\dblas1.f
+echo .
+wfl386 %wfopt% src\winextra\dblas2.f
+echo .
+
+rem C FILES
+wcl386 %wcopt% -fo=options.obj %matlabinclude% src\options.c
+echo .
+wcl386 %wcopt% -fo=rowmapM.obj %matlabinclude% -DFORTRANUPP -DFORTRANNOUNDER src\rowmapM.c
+echo .
+
+rem RESSOURCE FILE
+wrc -r "%matlabpath%\extern\include\mexversion.rc" -fo="mexversion.res"
+echo .
+
+rem LINKING
+wlink name rowmap.mexw32 system nt_dll export mexFunction option caseexact %lnklib% file dblas2.obj,dblas1.obj,rowmap.obj,options.obj,rowmapM.obj res mexversion.res
+echo .
+
+rem goto endOfBat
+
+rem CLEANUP
+if exist rowmap.obj del rowmap.obj
+if exist rowmapM.obj del rowmapM.obj
+if exist options.obj del options.obj
+if exist dblas1.obj del dblas1.obj
+if exist dblas2.obj del dblas2.obj
+
+if exist rowmap.err del rowmap.err
+if exist rowmapM.err del rowmapM.err
+if exist options.err del options.err
+if exist dblas1.err del dblas1.err
+if exist dblas2.err del dblas2.err
+
+if exist mexversion.res del mexversion.res
+if exist _libstub.obj del _libstub.obj
+
+:endOfBat
+pause
+
+

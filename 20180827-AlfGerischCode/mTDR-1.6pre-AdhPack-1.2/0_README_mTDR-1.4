@@ -1,0 +1,107 @@
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : 0_README_mTDR-1.4
+%* Date created  : 2008, Sep 18
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     :
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2008 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+
+This is the README file for the Matlab TDR System, Version 1.4.
+Release date: 2008, Sep 18
+
+See tdr/tdrhelp.txt for further information.
+
+A file listing of this Revision can be seen in file ls-alR .
+
+List of changes from Rev. 1.3 to Rev. 1.4 (2008, Sep 18)
+ 1 No complete change list is provided here. This is an intermediate
+   version which adds some features but not everything is complete
+   yet. It is however fully functional and issues error messages when
+   unimplemented features are accessed.
+ 2 True 1D support within the mTDR system (no axisymmetry and no
+   non-local terms as of yet).
+ 3 tdr/tdrFdgl.m is now implemented in a truly patch-wise manner which
+   makes is suitable towards modular time integration. 
+ 4 The tdr/tdrReac.m and tdr/tdrReacV.m files are removed and their
+   content is merged within the tdr/tdrFdgl.m function.
+ 5 The tdr/tdrGetSolutionValues.m function has been added.
+
+List of changes from Rev. 1.2 to Rev. 1.3 (2008, Sep 08)
+ 1 The subdirectory AdhPack has been added to the mTDR main
+   directory. It allows for the simulation of non-local terms in the
+   PDE models with some restrictions: 2D only, no axisymmetry, 1 patch
+   only, periodic boundary conditions. See below for further
+   details. This is likely to change in further releases.
+ 2 tdrSetup.m (Rev. 1.0) has been added to the mTDR main directory.
+   The mTDR systen can now be used following
+      path(PathToTDRmainDirectory, path); 
+      oldpath = tdrSetup;
+ 3 TDRP.grd.boundaryWidth is a new field of the grd structure
+   (definition in tdrInit has been part of the data structure before
+   and is removed there). 
+ 4 tdr/tdrComputeFaceData.m is now Rev. 1.2 because of point 3.
+ 5 tdr/tdrDiff.m is now Rev. 1.3 because of point 3.
+ 6 Introduced TDRP.tdr.have{Reaction,Diffusion,Taxis,NonLocal}Terms in
+   the TDRP data structure (defined in tdrInit).
+ 7 tdr/tdrTaxis is now Rev. 1.3 because of points 3, 6, and the
+   introduction of the non-local terms.
+ 8 tdr/tdrInit is now Rev. 1.1 because of points 3, 6, and the
+   introduction of the non-local terms.
+ 9 tdr/tdrFdgl is now Rev. 1.1 because of points 3, 6, and the
+   introduction of the non-local terms.
+10 tdr/tdrhelp.txt is now Rev. 1.3: added not that only up to mTDR-1.2
+   is described there but not the current changes!!
+
+
+List of changes from Rev. 1.1 to Rev. 1.2
+ - We implement the discretisation of the transport terms also for space
+   dependent taxis or diffusion functions, in particular if the type of the
+   transport function is DependsS or DependsSU (for the reaction function this
+   has been possible already). We do not need to provide the x- and
+   y-coordinates explicitly to ProbFTrans.m but instead add two parameters
+   at the end of the argument list when calling ProbFTrans.m from
+   tdr/tdrDiff.m, and tdr/tdrTaxis.m :
+    (1) the patchId for which the transport function is to be evaluated, and
+    (2) an 'x' if the transport function is to be evaluated on ALL left and
+        right faces (!) of patchId or a 'y' if it is to be evaluated on ALL
+        top and bottom faces of patchId. 
+   Affected files are: tdr/tdrDiff.m, and 
+                       tdr/tdrTaxis.m .
+
+List of changes from Rev. 1.0 to Rev. 1.1
+ - corrected computation of radial derivatives in axisymmetric case. This was
+   incorrect in Rev. 1.0! 
+   Affected files are: tdr/tdrComputeFaceData.m,
+                       tdr/tdrDiff.m, and 
+                       tdr/tdrTaxis.m .
+ - added parameter inputStruct.params.rcells in model
+   tdrExamples/DiffReac/ProbGetParams.m 
+
+
+
+==============================================================================
+Commands for creating the ls-alR file (to be executed one directory above 
+the mTDR-version directory):
+
+version="mTDR-1.4"
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+ls -alR ${version} > /tmp/ls-alR
+mv /tmp/ls-alR ${version}
+
+to check
+ls -alR ${version} > /tmp/ls-alR.chk
+diff /tmp/ls-alR.chk ${version}/ls-alR
+rm /tmp/ls-alR.chk
+

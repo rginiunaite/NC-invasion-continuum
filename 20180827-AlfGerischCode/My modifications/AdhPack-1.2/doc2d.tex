@@ -1,0 +1,226 @@
+\documentclass[a4,12pt]{article}
+
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\newcommand{\Real}[1]{\mathbb{R}^{#1}}
+\newcommand{\Toep}{\mathcal{T}}
+
+\begin{document}
+
+
+We are given a weight matrix $W$ with given structural constants $k_m, k_p,
+l_m,l_p$ in the form
+\[
+W=
+\begin{pmatrix}
+k_m\backslash{}l_m&|&1&|& l_p\\\hline
+1&|&&|&\\\hline
+k_p&|&&|&
+\end{pmatrix}
+\in\Real{k_m+1+k_p, l_m+1+l_p}
+\]
+and a data matrix $G$
+\[
+G \in \Real{N_2,N_1}\,.
+\]
+
+Let 
+\[
+z:=k_m+1+k_p\,,\quad s:=l_m+1+l_p\,.
+\]
+The weight matrix $W$ is indexed either using $-k_m:1:k_p$ for the rows and
+$-l_m:1:l_p$ for the columns or using $1:z$ for the rows and $1:s$ for the
+columns. 
+The matrix $G$ is indexed $j=1:N_2$ for the rows and $i=1:N_1$ for the columns.
+We assume that the dimensions of $W$ are (much) smaller than the dimensions of
+$G$.  
+
+We can place the $(0,0)$ entry of weight matrix $W$ over an entry $(j,i)$ of $G$
+and compute 
+\[
+a_{j,i}:=\sum_{k=-k_m}^{k_p}\sum_{l=-l_m}^{l_p}W_{k,l}G_{j+k,i+l}\,.
+\]
+This can be done with the given matrix $G$ if $(j,i)$ is sufficiently far away
+from the border of $G$. In all other cases we must extend the data matrix $G$ to
+a matrix $G_\text{ext}$ of larger dimension. 
+
+\subsubsection*{Specific considerations for the evaluation in the
+  $x_1$-direction} 
+
+In this case we want to compute
+\[
+A^{(1)}=(a_{j,i})\in\Real{N_2,N_1+1}\,,\quad j=1:N_2\,, i=0:N_1\,.
+\]
+Therefore, the extended data matrix $G_\text{ext}^{(1)}$ must be
+\[
+G_\text{ext}^{(1)}=
+\begin{pmatrix}
+k_m\backslash{}l_m+1&|&N_1&|& l_p\\\hline
+N_2&|&&|&\\\hline
+k_p&|&&|&
+\end{pmatrix}
+\in\Real{k_m+N_2+k_p,l_m+1+N_1+l_p}\,,
+\]
+i.e. $G_\text{ext}^{(1)}\in\Real{N_2+z-1,N_1+s}$
+The central part of $G_\text{ext}^{(1)}$ is given by the data $G$, the entries
+outside that central part will be specified later.
+
+\subsubsection*{Specific considerations for the evaluation in the
+  $x_2$-direction} 
+
+In this case we want to compute
+\[
+A^{(2)}=(a_{j,i})\in\Real{N_2+1,N_1}\,,\quad j=0:N_2\,, i=1:N_1\,.
+\]
+Therefore, the extended data matrix $G_\text{ext}^{(2)}$ must be
+\[
+G_\text{ext}^{(2)}=
+\begin{pmatrix}
+k_m+1\backslash{}l_m&|&N_1&|& l_p\\\hline
+N_2&|&&|&\\\hline
+k_p&|&&|&
+\end{pmatrix}
+\in\Real{k_m+1+N_2+k_p,l_m+N_1+l_p}\,,
+\]
+i.e. $G_\text{ext}^{(2)}\in\Real{N_2+z,N_1+s-1}$.
+The central part of $G_\text{ext}^{(2)}$ is given by the data $G$, the entries
+outside that central part will be specified later.
+
+\subsubsection*{Considerations for the evaluation in both, the $x_1$- and the 
+  $x_2$-direction} 
+
+We are now given the weight matrix $W$, as before, as well as the extended
+matrix $G_\text{ext}$ and a result matrix $A$ with dimensions
+\[
+G_\text{ext}\in\Real{G_z,G_s}\quad\text{and}\quad
+A\in\Real{A_z,A_s}
+\]
+and the goal is to compute
+\[
+a_{j,i}=\sum_{k=-k_m}^{k_p}\sum_{l=-l_m}^{l_p}W_{k,l}G_{\text{ext},k_m+j+k,l_m+i+l}\,,\quad
+j=1:A_z\,, i=1:A_s\,.
+\]
+All these sums are well defined since $G_\text{ext}$ has just the appropriate
+size. Evaluation of these sums, however, is typically very time consuming and we
+aim for a faster method of evaluation.
+
+Since the computation of the $a_{j,i}$ is linear in the elements of
+$G_\text{ext}$ we can rewrite the computation for all $(j,i)$ as a large
+matrix-vector-product. To this end let $a\in\Real{A_zA_s}$ and
+$g_\text{ext}\in\Real{G_zG_s}$ be the column vectors obtained by stacking up the
+columns of matrices $A$ and $G_\text{ext}$, respectively. Then there exists a
+matrix $T$ such that
+\[
+a = T g_\text{ext}\,,\quad T\in\Real{A_zA_s, G_zG_s}\,.
+\]
+Due to the construction of vector $a$ and $g_\text{ext}$ we consider $T$ to be a
+block matrix with blocks $T_{J,I}$,
+\[
+T= (T_{J,I})\,,\quad T_{J,I}\in\Real{A_z,G_z}\,,\quad J=1:A_s\,, I=1:G_s\,.
+\]
+It will turn out, that each block $T_{J,I}$ is a Toeplitz matrix and that $T$ at
+the block level has Toeplitz structure, too, i.e. $T$ is a block-Toeplitz matrix
+with Toeplitz blocks. We specify the blocks in the following but first introduce
+a notation.
+
+A Toeplitz matrix is characterised by its first column and first row
+entries. The Toeplitz matrices which we will encounter are banded with a lower
+band width $l$ and an upper bandwidth $u$ and so only $l$ elements of the first
+column and $u$ elements of the first row must be specified. This is done by the
+following notation (which gives the main diagonal entry twice):
+\[
+\Toep(t_{-l},t_{-l+1},\dots,t_{-1},t_0 \mathbf{;} t_0, t_1, \dots, t_u)\,.
+\]
+Note the semicolon.
+Now it is easily verified that the $(1,1)$ block of $T$ is
+\[ 
+T_{1,1}=\Toep(w_{1,1}; w_{1,1},w_{2,1}, \dots, w_{z,1})=:T_1\,.
+\]
+Similarly follows for the next blocks in the first row
+\[ 
+T_{1,I}=\Toep(w_{1,I}; w_{1,I}, w_{2,I}, \dots, w_{z,I})=:T_I\in\Real{A_z,G_z}\,,
+\quad I=1:s
+\]
+and then
+\[
+T_{1,I}=0\in\Real{A_z,G_z}\,,\quad I=s+1:G_s\,.
+\]
+Summarising, we obtain the following $G_s$ blocks in the first block row
+\[
+T_1, T_2,\dots, T_s,0,\dots,0\,.
+\]
+In the second block row we have the following $G_s$ blocks
+\[
+0, T_1, T_2,\dots, T_s, 0,\dots, 0\,.
+\]
+This continues until we obtain in the last block row the $G_s$ blocks
+\[
+0,\dots,0,T_1, T_2,\dots, T_s\,.
+\]
+This demonstrates the block-Toeplitz structure of matrix $T$.
+
+We now embed matrix $T$ in a suitable block-circulant matrix with circulant
+blocks. We start at the level of the individual blocks. Each Toeplitz block
+$T_{J,I}\in\Real{A_z,G_z}$ has lower bandwidth $l=0$ and upper bandwidth
+$u=z-1$. Hence it can be embedded (as upper left block) in a circulant matrix of
+dimension
+\[
+\ell=\max\{A_z+u,G_z+l\}= \max\{A_z+z-1,G_z\}\,.
+\]
+The circulant matrix $\hat{T}_I\in\Real{\ell,\ell}$, $I=1:s$, corresponding to
+the Toeplitz matrix $T_I$, is now defined by
+its first column, which is given by
+\[
+\hat{t}_I=(w_{1,I},0,\dots,0,w_{z,I}, w_{z-1,I},\dots,w_{2,I})^T
+\in\Real{\ell}\,, \quad I=1:s\,.
+\]
+The zero blocks in $T$ are increased to size $\ell\times\ell$, too, such that we
+obtain a matrix $\hat{T}\in\Real{\ell A_s,\ell G_s}$.
+Matrix $G_\text{ext}$ must be extended to $\hat{G}_\text{ext}\in\Real{\ell,G_s}$
+by adding the required number of zero rows at the bottom end. 
+The result matrix $A$ becomes also
+larger and we have $\hat{A}\in\Real{\ell,A_s}$ and the first $A_z$ rows of
+$\hat{A}$ equal the matrix $A$. Again, there is a correspondence between the
+matrices $\hat{G}_\text{ext}$ and $\hat{A}$ and corresponding vectors
+$\hat{g}_\text{ext}$ and $\hat{a}$, respectively. 
+
+What we have done at the level of each block of $T$, can now be performed at
+the block-level of matrix $\hat{T}$. The matrix $\hat{T}$ is a
+block-Toeplitz matrix with $A_s\times G_s$ blocks and has lower (block)
+bandwidth $l=0$ and upper (block) bandwidth $u=s-1$.
+Hence it can be embedded (as the upper left part) in a block-circulant matrix 
+$\bar{T}$ with $L\times L$ blocks, where
+\[
+L=\max\{A_s+u,G_s+l\}= \max\{A_s+s-1,G_s\}\,.
+\]
+As a block-circulant matrix, the matrix $\bar{T}$ is described by its $L$ blocks in
+the first column given by
+\[
+\hat{T}_1, 0, \dots, 0, \hat{T}_s, \hat{T}_{s-1}, \dots, \hat{T}_2\,.
+\]
+Since each of these blocks itself is circulant, the matrix $\bar{T}$ can be
+described by the first columns of these blocks, which are conveniently arranged
+in the following matrix
+\[
+V:=
+[\hat{t}_1, 0, \dots, 0, \hat{t}_s, \hat{t}_{s-1}, \dots,
+\hat{t}_2]\in\Real{\ell,L}\,. 
+\] 
+Extended matrices $\bar{A}, \bar{G}_\text{ext}\in\Real{\ell,L}$ are obtained from
+$\hat{A}$ and $\hat{G}_\text{ext}$, respectively, by adding zero columns at the
+right end. The vectors $\bar{a}$ and $\bar{g}_\text{ext}$ are defined as before
+and it then holds
+\[
+\bar{a} = \bar{T}\bar{g}_\text{ext}\,,
+\]
+where $\bar{T}$ is block-circulant with circulant blocks. Hence this product can
+be conveniently and efficiently computed via 2D-FFT as
+\[
+\bar{A} = \text{iFFT2}(\text{FFT2}(V) \otimes \text{FFT2}(\bar{G}_\text{ext}))\,.
+\]
+The object of interest, matrix $A$ can be recovered as the upper left block of
+matrix $\bar{A}$.
+\end{document}
+

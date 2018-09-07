@@ -1,0 +1,40 @@
+function [a] = evalIntegral1D(g, mask, methodId)
+% 
+% This function evaluates the non-local term in 1D in all right
+% cell end points for a periodic grid function given in the column
+% vector g. The result is returned as column vector a. If g is a
+% matrix then the non-local term is evaluated for each column of g
+% and the results are returned in a nmatrix a.
+% For the evaluation two different algorithms can be
+% employed and are selected by methodId 
+%   methodId == 1 ... summation based
+%   methodId == 2 ... FFT-based 
+% Usually, methodId == 2 is the most efficient.
+% The non-local term is encapsulated in the data structure mask,
+% which is created by using function setupIntegralRule1D.
+%
+% Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+% Version of 1.0 of January 15, 2007
+%
+
+switch methodId
+ case 1 
+  % Non-FFT variant using weight vector w
+  a=zeros(size(g));
+  ge = [g(end-(mask.lm)+1:end,:); g; g(1:mask.lp,:)];
+  w = mask.lm+mask.lp;
+  % evaluate integral
+  for i=1:size(g,1)
+    a(i,:)=mask.weights*ge(i:(i+w),:);
+  end
+ case 2 
+  % compute matrix-vector product via FFT
+  a = ifft(repmat(mask.circFFT, 1, size(g,2)) .* fft(g));
+ otherwise
+  error('evalIntegral1D::unknown methodId.');
+end
+
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

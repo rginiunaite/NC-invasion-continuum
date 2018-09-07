@@ -1,0 +1,81 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{amsmath}
+
+\parindent0cm
+
+\begin{document}
+
+\begin{verbatim}
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : tdrExamples/LinearAdvection/LinearAdvection.tex
+%* Date created  : 2006, January 27
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     : 
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2006 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+\end{verbatim}
+
+
+This example implements the scalar linear homogeneous advection equation
+\[
+\partial_t u + (v_1, v_2)\cdot\nabla u = 0
+\]
+for $(x,y)$ in the unit square and $t>t_0=0$ with constant velocity
+$(v_1, v_2)$. 
+The problems solution (on the whole real plane) is given by
+\[
+u(t,x,y)=u_0(x-v_1t, y-v_2t)\,,
+\]
+where $u(0,x,y)=u_0(x,y)$ is the prescribed initial condition.
+
+ 
+We consider the two cases that either $v_1=0$ or $v_2=0$ so that the
+transport is along one of the coordinate directions. 
+The initial condition at $t_0=0$ is
+\[
+u(0,x,y) = u_0(x,y):=
+\begin{cases}
+\max(0, 1 - 10 |0.5-x|) & \text{if } v_2 = 0\\
+\max(0, 1 - 10 |0.5-y|) & \text{if } v_1 = 0\,,
+\end{cases}
+\]
+which makes the problem essentially one-dimensional.
+As boundary conditions we need to prescribe Dirichlet conditions along
+the inflow boundary. We use zero Dirichlet conditions there. Along the
+remaining part no boundary conditions can be prescribed. However, for
+numerical purposes we simply use zero flux boundary conditions
+there. This is also consistent with the above exact solution (on
+unbounded domains) for sufficiently small $t\ge 0$.
+
+
+The example is not yet in TDR form. To achieve such a form, we
+introduce a velocity function $v(t,x,y)$ having a time independent
+profile 
+\[
+v(t,x,y)=v_0(x,y):=x v_1 + y v_2\,.
+\]
+Now we can write the above problem as a TDR system with two equations
+\begin{align*}
+\partial_t u +\nabla\cdot(u \nabla v) &= 0\\
+\partial_t v                  &= 0\,,
+\end{align*}
+where the initial conditions are given above. For the first equation we
+use the boundary conditions as described above and for the second we
+prescribe, for numerical reasons in order to evaluate derivatives
+along the boundary, Dirichlet boundary conditions according to the
+definition of $v$.
+
+This TDR model is implemented. 
+
+
+\end{document}
