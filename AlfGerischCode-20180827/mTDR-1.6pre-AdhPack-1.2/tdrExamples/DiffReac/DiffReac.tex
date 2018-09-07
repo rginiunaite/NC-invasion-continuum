@@ -1,0 +1,79 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{amsmath}
+
+\parindent0cm
+
+\begin{document}
+
+\begin{verbatim}
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : tdrExamples/DiffReac/DiffReac.tex
+%* Date created  : 2006, January 27
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     : 
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2006 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+\end{verbatim}
+
+
+This example implements the scalar linear diffusion-reaction equation
+\[
+\partial_t u = \nabla\cdot(D \nabla u) + g(u)
+\]
+with constant positive diffusion coefficient $D>0$ and reaction function
+$g(u)$\,.
+We always use a value $D=1$.
+The reaction function can be either $g\equiv 0$, or of logistic type
+$g(u)=\alpha u^\beta (1-u)$ with $\alpha,\beta>0$,
+or of a generalised logistic type $g(u)=-\alpha u (1-u)(\beta -u)$.
+In the generalised logistic case, $\alpha>0$ and $-1\le \beta < 1$; the case
+with $0< \beta < 1$ is what the geneticists refer to as the heterozygote
+inferiority case; we refer to 
+[T. Kawahara and M. Tanaka. \emph{Interactions of traveling fronts: An exact
+  solution of a nonlinear diffusion equation}. Physics Letters A, 97:311-314,
+1983] and the references cited there for details. 
+
+The spatial domain is either the 2D domain $(x,y)\in\Omega:=(0,1)\times(y_0,
+y_0+1)$ with parameter $y_0\ge 0$ or the 3D axi-symmetric domain with cross
+section $\Omega$ and the $x$-axes as axis of symmetry, that is $(x,
+r(y,z))\in\Omega$. The model is used to compare these two cases.
+The equation is considered for $t\ge t_0=0$.
+
+The initial condition is always independent of $x$ and in the 2D case can be
+either (\texttt{selectICandBC = 1})
+\[
+u(0,x,y) = (y-y_0)^2 \exp( -50(y-y_0-1)^2 )
+\]
+corresponding to a peak along $y=1+y_0$ and rapidly decaying towards zero for
+$y\to y_0$, or  (\texttt{selectICandBC = 2})
+\[
+u(0,x,y) = \exp( -50(y-y_0-0.3)^2)
+\]
+corresponding to a peak along $y=0.3+y_0$ and rapidly decaying towards zero
+for $y\to y_0$ and $y\to 1+y_0$.
+In the axi-symmetric case, $y$ is simply replaced by $r(y,z)$.
+
+
+In the case \texttt{selectICandBC = 1} we use constant Dirichlet boundary
+conditions (equal to one) along the boundary $y=y_0+1$ in case of a 2D spatial
+domain (and along the boundary $r(y,z)=y_0+1$ in case of the axi-symmetric
+spatial domain). On the remaining boundary parts we use zero-flux conditions.
+In the case \texttt{selectICandBC = 2} we use zeros flux condition on all the
+boundary. 
+
+
+The problem and its solution are independent of the $x$-coordinate. Therefor
+we use in that direction a coarse grid only.
+
+
+\end{document}

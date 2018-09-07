@@ -1,0 +1,114 @@
+mTDR-1.5:
+total 68
+drwxr-xr-x 6 gerisch numerik 4096 2008-10-23 13:48 .
+drwxr-xr-x 9 gerisch numerik 4096 2008-10-23 13:36 ..
+-r--r--r-- 1 gerisch numerik  913 2006-02-06 17:49 0_README_mTDR-1.0
+-r--r--r-- 1 gerisch numerik 1719 2007-01-03 14:34 0_README_mTDR-1.1
+-r--r--r-- 1 gerisch numerik 2647 2007-01-03 16:21 0_README_mTDR-1.2
+-r--r--r-- 1 gerisch numerik 4013 2008-09-08 17:36 0_README_mTDR-1.3
+-r--r--r-- 1 gerisch numerik 4738 2008-09-18 16:31 0_README_mTDR-1.4
+-r--r--r-- 1 gerisch numerik 5619 2008-10-23 13:46 0_README_mTDR-1.5
+drwxr-xr-x 4 gerisch numerik 4096 2008-10-23 09:44 AdhPack-1.0
+-rw-r--r-- 1 gerisch numerik 5730 2008-10-23 13:48 ls-alR
+drwxr-xr-x 2 gerisch numerik 4096 2008-10-23 13:35 tdr
+drwxr-xr-x 4 gerisch numerik 4096 2006-02-10 11:09 tdrExamples
+-r--r--r-- 1 gerisch numerik 1325 2008-10-01 16:04 tdrSetup.m
+drwxr-xr-x 2 gerisch numerik 4096 2005-10-05 21:34 tdrUtil
+
+mTDR-1.5/AdhPack-1.0:
+total 64
+drwxr-xr-x 4 gerisch numerik  4096 2008-10-23 09:44 .
+drwxr-xr-x 6 gerisch numerik  4096 2008-10-23 13:48 ..
+-r--r--r-- 1 gerisch numerik  1317 2008-02-12 14:27 evalIntegral1D.m
+-r--r--r-- 1 gerisch numerik  3923 2008-09-08 16:20 evalIntegral2D.m
+-rw-r--r-- 1 gerisch numerik 19978 2008-10-01 15:57 setupIntegralRule1D.m
+-rw-r--r-- 1 gerisch numerik 19882 2008-10-01 16:02 setupIntegralRule2D.m
+drwxr-xr-x 2 gerisch numerik  4096 2008-09-05 15:17 Tests1D
+drwxr-xr-x 3 gerisch numerik  4096 2008-09-05 15:18 Tests2D
+
+mTDR-1.5/AdhPack-1.0/Tests1D:
+total 32
+drwxr-xr-x 2 gerisch numerik 4096 2008-09-05 15:17 .
+drwxr-xr-x 4 gerisch numerik 4096 2008-10-23 09:44 ..
+-r--r--r-- 1 gerisch numerik 2930 2008-02-19 13:19 OneD_CompareEvaluationSchemes.m
+-r--r--r-- 1 gerisch numerik 1895 2008-02-13 01:50 OneD_CompareEvaluationSchemes.mat
+-r--r--r-- 1 gerisch numerik 4033 2008-02-19 10:48 OneD_ConvergenceNonLocalTermApprox.m
+-r--r--r-- 1 gerisch numerik  979 2008-02-12 15:53 printeps.m
+-r--r--r-- 1 gerisch numerik 1057 2008-02-14 09:53 run_OneD_ConvergenceNonLocalTermApprox.m
+-r--r--r-- 1 gerisch numerik 1149 2008-02-13 16:14 sol1D_Fourierg.m
+
+mTDR-1.5/AdhPack-1.0/Tests2D:
+total 36
+drwxr-xr-x 3 gerisch numerik 4096 2008-09-05 15:18 .
+drwxr-xr-x 4 gerisch numerik 4096 2008-10-23 09:44 ..
+-r--r--r-- 1 gerisch numerik  979 2008-02-06 15:47 printeps.m
+-r--r--r-- 1 gerisch numerik 4263 2008-02-19 11:15 TwoD_CompareEvaluationSchemes.m
+-r--r--r-- 1 gerisch numerik 1073 2008-02-09 16:25 TwoD_ComputeWeightsUsingTwoDifferentMethods.m
+-r--r--r-- 1 gerisch numerik 5612 2008-02-19 11:33 TwoD_ConvergenceNonLocalTermApprox.m
+drwxr-xr-x 2 gerisch numerik 4096 2008-09-05 15:18 TwoD_ConvergenceNonLocalTermApprox_MatFiles
+
+mTDR-1.5/AdhPack-1.0/Tests2D/TwoD_ConvergenceNonLocalTermApprox_MatFiles:
+total 8
+drwxr-xr-x 2 gerisch numerik 4096 2008-09-05 15:18 .
+drwxr-xr-x 3 gerisch numerik 4096 2008-09-05 15:18 ..
+
+mTDR-1.5/tdr:
+total 100
+drwxr-xr-x 2 gerisch numerik  4096 2008-10-23 13:35 .
+drwxr-xr-x 6 gerisch numerik  4096 2008-10-23 13:48 ..
+-r--r--r-- 1 gerisch numerik  6413 2008-09-17 14:31 tdrComputeFaceData.m
+-r--r--r-- 1 gerisch numerik  6408 2008-09-17 14:32 tdrDiff.m
+-r--r--r-- 1 gerisch numerik 19010 2008-09-17 14:29 tdrFdgl.m
+-r--r--r-- 1 gerisch numerik   936 2008-10-01 18:29 tdrGetSolutionValues.m
+-r--r--r-- 1 gerisch numerik 19661 2008-09-08 17:35 tdrhelp.txt
+-r--r--r-- 1 gerisch numerik  9768 2008-10-01 18:52 tdrInit.m
+-r--r--r-- 1 gerisch numerik   891 2005-07-13 14:41 tdr.m
+-r--r--r-- 1 gerisch numerik  2120 2008-09-17 14:27 tdrSolPlot.m
+-r--r--r-- 1 gerisch numerik 11859 2008-10-01 18:39 tdrTaxis.m
+
+mTDR-1.5/tdrExamples:
+total 16
+drwxr-xr-x 4 gerisch numerik 4096 2006-02-10 11:09 .
+drwxr-xr-x 6 gerisch numerik 4096 2008-10-23 13:48 ..
+drwxr-xr-x 3 gerisch numerik 4096 2006-06-08 14:34 DiffReac
+drwxr-xr-x 2 gerisch numerik 4096 2006-02-01 15:03 LinearAdvection
+
+mTDR-1.5/tdrExamples/DiffReac:
+total 112
+drwxr-xr-x 3 gerisch numerik  4096 2006-06-08 14:34 .
+drwxr-xr-x 4 gerisch numerik  4096 2006-02-10 11:09 ..
+-r--r--r-- 1 gerisch numerik 10953 2006-02-06 17:37 ComparisonAxisymmetricAnd2D.m
+-r--r--r-- 1 gerisch numerik 56217 2006-02-06 17:38 DiffReac.pdf
+-r--r--r-- 1 gerisch numerik  3037 2006-02-06 15:23 DiffReac.tex
+drwxr-xr-x 2 gerisch numerik  4096 2006-06-08 14:33 EPS
+-r--r--r-- 1 gerisch numerik  2178 2006-02-06 15:32 ProbBCs.m
+-r--r--r-- 1 gerisch numerik  1762 2006-02-06 15:27 ProbFReac.m
+-r--r--r-- 1 gerisch numerik  1314 2006-02-06 16:16 ProbFTrans.m
+-r--r--r-- 1 gerisch numerik  1427 2006-02-06 15:30 ProbFy0.m
+-r--r--r-- 1 gerisch numerik  6033 2006-06-08 14:34 ProbGetParams.m
+
+mTDR-1.5/tdrExamples/DiffReac/EPS:
+total 8
+drwxr-xr-x 2 gerisch numerik 4096 2006-06-08 14:33 .
+drwxr-xr-x 3 gerisch numerik 4096 2006-06-08 14:34 ..
+
+mTDR-1.5/tdrExamples/LinearAdvection:
+total 80
+drwxr-xr-x 2 gerisch numerik  4096 2006-02-01 15:03 .
+drwxr-xr-x 4 gerisch numerik  4096 2006-02-10 11:09 ..
+-r--r--r-- 1 gerisch numerik  2457 2006-02-01 14:54 LinearAdvection.m
+-r--r--r-- 1 gerisch numerik 45409 2006-02-01 14:45 LinearAdvection.pdf
+-r--r--r-- 1 gerisch numerik  2701 2006-02-01 14:42 LinearAdvection.tex
+-r--r--r-- 1 gerisch numerik  2724 2006-02-01 14:56 ProbBCs.m
+-r--r--r-- 1 gerisch numerik  1443 2006-02-01 14:57 ProbFTrans.m
+-r--r--r-- 1 gerisch numerik  1638 2006-02-01 14:58 ProbFy0.m
+-r--r--r-- 1 gerisch numerik  3862 2006-02-01 15:03 ProbGetParams.m
+
+mTDR-1.5/tdrUtil:
+total 28
+drwxr-xr-x 2 gerisch numerik 4096 2005-10-05 21:34 .
+drwxr-xr-x 6 gerisch numerik 4096 2008-10-23 13:48 ..
+-r--r--r-- 1 gerisch numerik 2127 2005-10-05 21:33 outputfunPlot.m
+-r--r--r-- 1 gerisch numerik 4361 2005-10-05 17:36 plotPatch.m
+-r--r--r-- 1 gerisch numerik 1784 2005-10-05 17:35 timerPrint.m
+-r--r--r-- 1 gerisch numerik 1233 2005-10-05 17:31 timerReset.m

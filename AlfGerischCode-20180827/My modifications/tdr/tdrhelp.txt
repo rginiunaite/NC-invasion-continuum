@@ -1,0 +1,404 @@
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : tdr/tdrhelp.txt
+%* Date created  : 2006, January 27
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     : 1.1 (AG, 2006 06 08)
+%*                     - documented new fields skalYT and skalYB in TDRP.data
+%*                 1.2 (AG, 2007 01 03)
+%*                     - documented changes in calling ProbFTrans.m if it is
+%*                       depending on spatial coordinates.
+%*                 1.3 (AG, 2008 09 08)
+%*                     - only added not that this version describes
+%*                       the mTDR system up to version 1.2 
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2008 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+
+
+NOTE: This file describes the mTDR system up to Version 1.2 only!!! 
+
+A. Overview and running a simulation
+-------------------------------------
+
+The Matlab TDR system can be used to numerically solve PDE systems for
+a vector of functions u(t,x)=(u_1(t,x),...,u_n(t,x)) of the form
+  \partial_t u_i + \div ( \sum_{j=1}^n f_{ij}(u) \grad u_j ) = g_i(t,x,u)
+for i=1,...,n, where g=(g_1,...,g_n) is the vector of reaction terms
+and f_{ii}(u) := -p_{ii}(u) for i=1,...,n, and f_{ij} := p_{ij}(u) u_i for
+i,j=1,...,n with i \ne j describe transport by diffusion and
+taxis. Here p_{ij}(u) are the diffusion coefficient functions (if i==j)
+and the taxis coefficient functions (i~=j). The divergence and the
+gradient are with respect to two spatial coordinates if the spatial
+domain is a subset of \Real^2 and with respect to three spatial
+coordinates if the spatial domain is an axysymmetric 3D domain with
+symmetry axis coinciding with the x_1-axis. Initial conditions for all
+components of u must be supplied as well as suitable boundary conditions. 
+
+To run the simulation of a specific TDR model, you need to
+1. Set up the problem in specfic m-files, see Section B, and make this
+   directory the working directory of Matlab.
+2. Include the tdr and tdrUtil in the current Matlab path
+     path('../../tdrUtil',path);
+     path('../../tdr',path);
+3. Init the TDR problem by calling
+     [y0, tspan] = tdrInit([extra params]);
+   where you can supply extra parameters, which are passed on to your
+   ProbGetParams() function created in 1.
+4. Set options for your ODE solver, e.g.
+     options = odeset('OutputFcn', @outputfunPlot, 'AbsTol', 1e-8, ...
+                      'RelTol', 1e-8);
+5. Call the ODE solver of your choice, e.g.
+     [t,y] = ode45(@tdrFdgl, tspan, y0, options);
+   where tdrFdgl() implements the spatial discretization of the TDR
+   system. 
+6. Evaluate and post-process the solution [t,y] returned by the ODE
+   solver.  
+
+
+B. Setting up a TDR problem
+----------------------------
+To set up a TDR problem, a set of m-files (problem functions) must be created 
+and stored in a new directory. The names, purpose, and structure of these 
+files is described below.
+
+B.1 ProbGetParams.m
+--------------------
+ function [grd, tdr, params] = ProbGetParams(varargin)
+
+ This function sets up problem parameters. It is called once by tdrInit()
+ and all parameters supplied to tdrInit() are passed on to ProbGetParams().
+ The problem parameters must be returned in three structures described below.
+
+ Structure params:     
+   This structure contains user defined constants and other data and is passed 
+   to any other problem function.
+
+ Structure tdr:        
+   This structure contains fields describing the TDR system in general terms.
+     tdr.size           ... integer denoting the number of PDEs (species) in 
+			    the TDR system.
+     tdr.tvec           ... vector of output times, tdr.tvec(1) is the initial 
+                            time, tdr.tvec(end) is the final time.
+     tdr.FReac.depends  ... column vector of length tdr.size describing the 
+			    dependence of the reaction term of each PDE on
+			    various arguments. To describe this dependence, 
+			    the codes given in Section C.1 are used. 
+			    If this vector contains only Zero entries then 
+			    ProbFReac() is never called; otherwise all entries
+			    are assumed as DependsTSU and ProbFReac(), as 
+			    described below, is called.
+     tdr.FReac.vec      ... true if the ProbFReac() can be called vectorised,
+			    see the description of ProbFReac() below.
+     tdr.FTrans.depends ... matrix of size tdr.size times tdr.size, where the 
+			    (i,j) entry describes how the transport function
+			    p_{i,j} depends on various arguments. To describe 
+			    this dependence, the codes given in Section C.1 
+			    are used. If this matrix contains only Zero entries
+			    then ProbFTrans() is never called.
+
+ Structure grd:        
+   This structure contains fields describing the problem domain and the spatial
+   grid of the MOL discretization. 
+   The problem domain is either a bounded 2D domain or a bounded axisymmetric
+   3D domain with the x-axis being the axis of symmetry.
+
+
+     grd.isAxiSymmetric ... boolean defining an axisymmetric 3D domain if true
+			    and a 2D domain if (false).
+
+   If the problem domain is an axisymmetric 3D domain then it is decribed by
+   specifying its 2D cross section with the plane defined by the x- and 
+   positive y-axis (the z=0 coordinate is ignored). This cross section will 
+   be refered to as '(problem) domain', too. So, independent of the value of 
+   grd.isAxiSymmetric, the domain is specified the same way. 
+
+   The domain must be partitioned into rectangular patches, where any side of
+   one patch is either part of the boundary of the domain or exactly one side
+   (and not only part of) of a neighbouring patch. So first, the number of 
+   patches must be specified and the neighbouring patches of each patch must
+   be declared:
+     grd.nop            ... positive integer specifying the number of patches 
+			    of the domain (these are numbered 1,2,...,grd.nop).
+     grd.ngb            ... integer matrix of size grd.nop times 4, where row 
+                            i specifies the [left right bottom top] 
+			    neighbouring patch of patch i by giving its patch 
+			    number. If one side of patch i is a boundary of the
+			    problem domain then the neighbour number 0 is used.
+
+   Now the lower left corner (x0,y0) of each patch must be specified:
+     grd.x0             ... real vector of length grd.nop
+     grd.y0		... real vector of length grd.nop
+   The dimension of each patch (width and height) are derived from the grid
+   specified on each patch. We use a uniform rectangular grid on each patch 
+   specified by
+     grd.dx             ... real vector of length grd.nop giving the width of
+			    grid cells in each patch.
+     grd.dy             ... real vector of length grd.nop giving the height of
+			    grid cells in each patch.
+     grd.nx             ... real vector of length grd.nop giving numbers of
+			    grid cells in the x-direction in each patch.
+     grd.ny             ... real vector of length grd.nop giving numbers of
+			    grid cells in the y-direction in each patch.
+   These numbers must satisfy the following conditions
+     (1) The patches do not overlap, and
+     (2) if patch i and j are neighbours then grd.dx(i) == grd.dx(j) and
+         grd.dy(i) == grd.dy(j).
+
+   This completes the setup of problem parameters. From the grid parameters, 
+   further fields of the grd struct are derived in the call to tdrInit() as 
+   explained in 'Additional fields of the grd struct' below. Furthermore, from
+   the domain and grid definition above 'the standard order' of solution 
+   components in the solution vector is derived, see below.
+
+
+B.2 ProbFy0.m
+--------------
+ function [y0] = ProbFy0(coords, params)
+
+
+ This function provides the initial data y0 of the problem at coordinates 
+ (coords(1), coords(2)) as a column vector of length tdr.size. It is called 
+ for each grid cell by tdrInit() following the call to ProbGetParams(). The 
+ argument coords is a vector of length 2 providing the x- and y-coordinate at 
+ which the initial data is to be evaluated. These coordinates correspond to 
+ the centre of a grid cell and the returned values y0 are taken as average 
+ values in that grid cell at initial time tdr.tvec(1). The argument params 
+ is the struct params as provided by the user in ProbGetParams(). 
+
+
+B.3 ProbFReac.m
+----------------
+ function [ydot] = ProbFReac(t, coords, y, params)
+
+ This function evaluates the vector of reaction terms g=(g_1,...,g_n)
+ of the TDR system which may depend on time, space and solution
+ state. Note that a non-vectorized implementation leads to a
+ substantial increase in computation time due to the overhead of
+ function calls.
+
+ * Vectorized version (tdr.FReac.vec = true):
+     t      ... real scalar, current time.
+     coords ... real matrix of dimension 2 times number of grid cells with
+                space coordinates of all grid cell centres.
+     y      ... real matrix of dimension tdr.size times number of grid cells 
+		with current solution state in all grid cells.
+     params ... struct params as provided by the user in ProbGetParams().
+     ydot   ... real matrix of dimension tdr.size times number of grid cells 
+		with column ydot(:,i) containing the values of the reaction
+		terms of the TDR system evaluated at time t, space point 
+		(x=coords(1,i), y=coords(2,i)), and solution values y(:,i).
+
+  
+ * Non-vectorized version (tdr.FReac.vec = false):
+     t      ... real scalar, current time.
+     coords ... real vector of length 2 with the space coordinates of a 
+		grid cell centre.
+     y      ... real (column) vector of length tdr.size with current solution 
+		state in that grid cell.
+     params ... struct params as provided by the user in ProbGetParams().
+     ydot   ... real (column) vector of length tdr.size containing the values 
+		of the reaction	terms of the TDR system evaluated at time t, 
+		space point (x=coords(1), y=coords(2)), and solution values y.
+
+
+
+
+B.4 ProbFTrans.m
+-----------------
+ function [pij] = ProbFTrans(i, j, params, varargin)
+
+ This function evaluates the diffusion coefficient function (if i==j) or the
+ taxis coefficient function (i~=j) p_{ij}(u). Here i and j are
+ integers in the set {1, 2,...,tdr.size} and 
+     params ... struct params as provided by the user in ProbGetParams().
+ * If tdr.FTrans.depends(i,j) == Zero then ProbFTrans() is never called for 
+   that pair of (i,j).
+ * If tdr.FTrans.depends(i,j) == Const then varargin is empty and the return
+   value pij is a scalar.
+ * If tdr.FTrans.depends(i,j) == DependsS then varargin has two elements 
+    {1}   patchId ... the patch on which the transport function is evaluated
+    {2}   'x' or 'y' ... indicating that the transport function is evaluated
+          on ALL left and right cell faces ('x') or on ALL top and bottom cell
+          faces ('y') of patch patchId.
+   From this data the (x,y) coordinates for the evaluation of the transport
+   function can be derived and the function values are returned as a matrix.
+ * If tdr.FTrans.depends(i,j) == DependsU then varargin has three elements 
+    {1}   y(.,.,.) where the third dimension has size tdr.size and the return value
+          is a matrix of dimension size(y,1) times size(y,2), where the (k,l)-entry
+          is the transport function p_{i,j} evaluated at vector y(k,l,:).
+    {2}   patchId ... see above.
+    {3}   'x' or 'y' ... see above.
+   Arguments {2} and {3} are not required here.
+ * If tdr.FTrans.depends(i,j) == DependsSU then varargin has three elements 
+    {1}   y(.,.,.) where the third dimension has size tdr.size and the return value
+          is a matrix of dimension size(y,1) times size(y,2), where the (k,l)-entry
+          is the transport function p_{i,j} evaluated at vector y(k,l,:) and
+          at (x,y) coordinates derived from arguments {2} and {3}.
+    {2}   patchId ... see above.
+    {3}   'x' or 'y' ... see above.
+
+
+B.5 ProbBCs.m
+--------------
+ function [BCtype,BCval] = ProbBCs(patchId, bdry, t, xvals, yvals, params)
+
+ This function evaluates the boundary conditions on the side bdry of patch
+ patchId at given time and space points and returns the type of BC and 
+ corresponding values.
+     patchId... integer denoting the current patch
+     bdry   ... integer denoting the current side of that patch; for codes
+		see section C.1.
+     t	    ... real, current time.
+     xvals  ... real column vector with x-coordinates.
+     yvals  ... real column vector, same size as xvals, with y-coordinates. 
+     params ... struct params as provided by the user in ProbGetParams().
+ The return values are
+     BCtype ... integer matrix of dimension length(xvals) times tdr.size with 
+		codes, see section C.1, describing the type of boundary 
+		condition in the points (xvals,yvals) at time t in the
+		various components of the TDR system.
+     BCval  ... real matrix of dimension length(xvals) times tdr.size with 
+		values of the boundary condition. Elements of this matrix 
+		are not used if the corresponding element in BCtype is None 
+		or ZeroFlux.
+
+
+C. Description of some internals of the TDR system
+---------------------------------------------------
+
+C.1 Codes to identify function dependencies, boundaries, and BCs
+--------------------------------------------------------------------------
+
+ Codes to describe the dependence of a function f on various arguments:
+  Zero       = 0;                              % f \equiv 0
+  Const      = 1;                              % f \equiv const
+  DependsT   = 2;                              % f = f(t)
+  DependsS   = 4;                              % f = f(x,y)
+  DependsU   = 8;                              % f = f(u)
+  DependsTS  = DependsT + DependsS;            % f = f(t, x, y)
+  DependsTU  = DependsT + DependsU;            % f = f(t, u)
+  DependsSU  = DependsS + DependsU;            % f = f(x, y, u)
+  DependsTSU = DependsT + DependsS + DependsU; % f = f(t, x, y, u)
+
+ Codes to identify the boundaries of a cell or patch:
+  left       = 1;
+  right	     = 2;
+  bottom     = 3;
+  top	     = 4;
+
+ Codes to define boundary condition types
+  None       = 0;
+  ZeroFlux   = 1;
+  Dirichlet  = 2;
+
+
+C.2 The standard order
+-----------------------
+ The standard order of grid cells is defined as
+  (1) First all grid cells of patch 1, then those of patch 2, patch 3, etc.
+  (2) Within each patch, first the row of grid cells with the smallest x-
+      values, then the row of grid cells just above and so on (i.e. bottom 
+      to top).
+  (3) Within each row of grid cells start with the grid cell with the smallest
+      y-values, then the grid cell next to the right and so on (i.e. left to 
+      right).
+ The standard order of the solution components in the solution vector follows 
+ the standard order of the grid cells defined above, and
+  (4) Within each grid cell, the solution components are in the order 1,2,...,
+      tdr.size and stored consecutively.
+
+ For picking out components of the solution out of a solution vector in 
+ standard order, we refer, for instance, to function tdrSolPlot().
+
+
+C.3 The global variable TDRP
+-----------------------------
+ The global struct variable TDRP is used as data and work space for TDR 
+ simulations. Below is a list of fields of the struct and where they are 
+ created.
+ The following three fields of TDRP describe the TDR problem
+  TDRP.params             ... created in ProbGetParams()
+  TDRP.tdr                ... created in ProbGetParams()
+  TDRP.grd                ... created in ProbGetParams() and extended in 
+                              tdrInit().
+ The field data of TDRP is a structure used to evaluate the spatial 
+ discretisation of the TDR system. It has the following fields:
+  TDRP.data.boundaryWidth ... created in tdrFdgl::tdrPrepTrans()
+  TDRP.data.ydot          ... created in tdrFdgl::tdrPrepTrans()
+  TDRP.data.y             ... created in tdrFdgl::tdrPrepTrans()
+  TDRP.data.ComputedFaceData ... created/modified in tdrFdgl(), tdrDiff(), 
+				 tdrTaxis(), tdrComputeFaceData()
+  TDRP.data.uDx           ... created in tdrComputeFaceData()
+  TDRP.data.uDy           ... created in tdrComputeFaceData()
+  TDRP.data.uAvx          ... created in tdrComputeFaceData()
+  TDRP.data.uAvy          ... created in tdrComputeFaceData()
+  TDRP.data.skalYT        ... created in tdrComputeFaceData()
+  TDRP.data.skalYB        ... created in tdrComputeFaceData()
+
+
+C.4 Additional fields of the grd struct
+----------------------------------------
+ The following additional fields of the struct grd are created in the call
+ to tdrInit():
+     grd.gridsize ... integer with the number of grid cells in the grid.
+     grd.ps ... integer vector of length grd.nop with grd.ps(i) containing the
+		index to the first solution component of patch i (PatchStart). 
+     grd.pe ... integer vector of length grd.nop with grd.ps(i) containing the
+		index to the last solution component of patch i (PatchEnd). 
+     grd.cellCentreMatrix ... real matrix of dimension 2 times grd.gridsize 
+		containing the x- and y-coordinates of the centre of all grid
+		cells (grid cells are ordered in standard order)	  
+
+
+C.5 The global variable TIMER
+------------------------------
+ We have included a set of timers and counters into the evaluation of the 
+ right-hand side of the MOL-ODE. These are updated in tdrFdgl(). The functions 
+ timerReset() and timerPrint(), both in the tdrUtil subdirectory, can be used 
+ to set all timers to zero and to print the current value of the timer. We 
+ refer to these functions for a list of available timer and counter.
+
+
+D. Function overview of the TDR system
+---------------------------------------
+The functionality of the TDR system implementation is organised in two
+subdirectories. Subdirectory 'tdr' contains the computational core of
+the spatial discretisation of TDR systems. All functions in that subdirectory
+have a name starting with 'tdr'. The second subdirectory 'tdrUtil'
+contains functions which are used by the functions in subdirectory 'tdr' but
+which are not essential.
+
+Subdirectory tdr
+  tdr()                   ... shows this file (tdrhelp.txt) on the screen.   
+  tdrInit()		  ... init a TDR system.   
+  tdrFdgl()		  ... provide right-hand side of MOL-ODE of TDR system.
+  tdrReac()		  ... evaluate reaction terms of TDR system. 
+  tdrReacV()		  ... evaluate vectorised reaction terms of TDR system.
+  tdrComputeFaceData()	  ... compute data on grid faces.  
+  tdrDiff()		  ... evaluate diffusion terms of TDR system.        
+  tdrTaxis()		  ... evaluate taxis terms of TDR system.
+  tdrSolPlot()		  ... visualise a solution component of the TDR system.
+
+Subdirectory tdrUtil
+  timerPrint()		  ... print current values of all timers and counters.
+  timerReset()		  ... reset all timers and counters to zero.
+  plotPatch()		  ... plot solution in one patch; used by tdrSolPlot().
+  outputfunPlot()	  ... output function for Matlab ODE solver.
+
+E. Short summary of provided TDR model problems
+------------------------------------------------
+  LinearAdvection
+	TDR system implementation of the scalar 1D linear homogeneous
+	advection equation with constant velocity.
+  DiffReac
+        A scalar diffusion-reaction equation with logistic type growth
+	terms used to investigate the effect of an axisymmetric domain
+	on the solution (compared to a standard 2D domain). 

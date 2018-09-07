@@ -1,0 +1,24 @@
+%*********************  MATLAB TDR SYSTEM  ************************************
+%* File          : 0_README_mTDR-1.0
+%* Date created  : 2006, February 6
+%* Author(s)     : Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+%* Version       : 1.0
+%* Revisions     :
+%*
+%*********************  COPYRIGHT NOTICE  *************************************
+%* Copyright (C) 2004-2006 Alf Gerisch
+%*                         Martin-Luther-University Halle-Wittenberg
+%*                         Germany
+%*
+%* The TDR system in Matlab has been implemented by
+%*   Mathias Franz (Oct 2004 - Feb 2005)
+%*   Alf Gerisch   (Oct 2004 -         )
+%******************************************************************************
+
+This is the README file for the Matlab TDR System, Version 1.0.
+Release date: 2006 February 06.
+
+See tdr/tdrhelp.txt for further information.
+
+A file listing of this Revision can be seen in file ls-alR .
+

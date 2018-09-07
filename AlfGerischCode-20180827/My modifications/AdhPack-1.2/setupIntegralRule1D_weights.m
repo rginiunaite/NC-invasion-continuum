@@ -1,0 +1,531 @@
+function nonlocal = setupIntegralRule1D_weights(R, h, Omega, ...
+						ruleId, varargin)
+% nonlocal = setupIntegralRule1D_weights(R, h, Omega, ...
+%				         ruleId, varargin)
+%
+% Assume that a column vector G of length N1 has entries G(i) \approx
+% g(x1_i) and can be extended periodically whenever required. The 
+% grid points x1_i are on a uniform spatial grid with grid spacing
+% h. We want to approximate the non-local term
+% A\{g()\}(x1):= 1/R\int_{-R}^R \Omega(r) g(x1+r) dr 
+% for x1 = x1_i+h/2 by evaluating the scalar product
+%   nonlocal.weights * G(i+[-nonlocal.lm:nonlocal.lp]); 
+% Here, data stored in the structure nonlocal computed and returned
+% by calling this function is employed. The elements of that
+% structure are detailed below. In the above formula we assume that
+% index i is sufficiently in the interior of G; otherwise one must
+% make use of the periodicity of G. A faster method of evaluating
+% the integral for all indices i at the same time is via FFT, see
+% evalIntegral1D.m for the FFT option. The data required there is
+% also prepared here and returned in the structure nonlocal.
+%
+% The function \Omega(r) is prescribed by the argument Omega of this
+% Matlab function. Omega must be an integer in the cases ruleId=1,2
+% and can be either an integer or a function handle in the cases
+% ruleId=3,4,5,6. In the case that Omega is an integer, then
+%  Omega==1  ... constant \Omega(r),
+%  Omega==2  ... linearly decaying \Omega(r).
+% In the case that Omega is a function handle, then Omega must be
+% callable with arguments r\in(0,+\infty) and returns \Omega(r); for
+% r>R the return value of Omega is always corrected to zero (make
+% sure Omega does not return NaN in that case). 
+%
+% The function $g(x1)$ can be reconstructed by
+% piecewise constant or piecewise linear reconstruction and the
+% weights are computed either analytically or via the composite
+% midpoint or trapezoidal rule. The choice is made via the ruleId
+% argument and the following combinations are supported:
+% ruleId  = 1   ... exact integration, piecewise constant reconstruction
+%         = 2   ... exact integration, piecewise linear reconstruction
+%         = 3   ... midpoint rule, piecewise constant reconstruction
+%         = 4   ... midpoint rule, piecewise linear reconstruction
+%         = 5   ... trapezoidal rule, piecewise constant reconstruction
+%                   (not implemented) 
+%         = 6   ... trapezoidal rule, piecewise linear reconstruction
+%
+% For ruleId = 3,4,5,6 varargin{1} prescribes the number of subdivision
+% intervals. 
+%
+% Input arguments
+% ---------------
+% R           ... sensitivity radius
+% h           ... grid width in spatial grid
+% Omega       ... select Omega(r) function (allowed values 1 or 2,
+%                 function handle)
+% ruleId      ... = selecet reconstruction and integration rule
+% varargin{1} ... Number of subdivision in composite integration
+%                 rules (for ruleId = 3,4,5,6)
+%
+% Output data structure
+% ---------------------
+% The structure returned has the following fields:
+% R, h, ruleId              ... copies of the respective input
+% OmegaId                   ... the value of Omega if it is an integer
+% M                         ... number of grid cells of size h to
+%                               cover sensitivity radius R
+% lm, lp                    ... the weight vector has length lm+lp+1
+
+% weights                   ... the weight vector
+% NR                        ... the number of subdivision used to
+%                               compute the weights with a
+%                               composite rule (otherwise NaN)
+%
+% Alf Gerisch (alf.gerisch@mathematik.uni-halle.de)
+% Version 1.2 of May 18, 2010
+%   * renamed from setupIntegralRule1D.m to
+%   setupIntegralRule1D_weights.m;
+%   * removed computation of nonlocal.circ and nonlocal.circFFT
+%   (this is now done in the new function setupIntegralRule1D_BCs.m
+%   which also includes the boundary conditions)
+% Version 1.1 of Sep 30, 2008
+%   * changed input argument OmegaId to Omega which can now be a
+%   function handle or an integer (1 or 2) to make it consistent
+%   with the 2D version of the setup function. Details are
+%   documented above.
+% Version 1.0 of Jan 15, 2008 
+%   * initial version
+%
+
+
+% List of subfunctions in this file
+% ==========================================
+% function wl  = computeWeight(l,R,h,Im,Ip)
+% function Iml = computeWeightIm(l,R,h,Im)
+% function Ipl = computeWeightIp(l,R,h,Ip)
+% function Im  = Imconst(l,R,h,r,pos)
+% function Ip  = Ipconst(l,R,h,r,pos)
+% function Im  = Imdecay(l,R,h,r,pos)
+% function Ip  = Ipdecay(l,R,h,r,pos)
+% 
+
+
+debugging = false; %true;
+verboseLevel = 1;
+
+nonlocal.R = R;
+nonlocal.h = h;
+nonlocal.ruleId  = ruleId;
+nonlocal.M = ceil(R/h);
+nonlocal.NR = NaN;
+
+% check Omega
+if isnumeric(Omega)
+  switch Omega
+   case {1,2}
+    OmegaId = Omega;
+    nonlocal.OmegaId = Omega;
+   otherwise
+    error('setupIntegralRule1D_weights::Unsupported value of OmegaId.');
+  end
+  switch ruleId
+   case {1,2}
+    % dealt with individually
+   case {3,4,5,6}
+    switch OmegaId
+     case 1
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using constant Omega(r)');
+      end
+      OmegaP  = @(r)((1/(2*nonlocal.R))*(abs(r)<=nonlocal.R));
+      OmegaM  = @(r)(-(1/(2*nonlocal.R))*(abs(r)<=nonlocal.R));  
+     case 2
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using linearly decaying Omega(r)');
+      end
+      OmegaP  = @(r)(1/nonlocal.R*(1-r/nonlocal.R)*(abs(r)<=nonlocal.R));
+      OmegaM  = @(r)(-1/nonlocal.R*(1+r/nonlocal.R)*(abs(r)<=nonlocal.R));  
+     otherwise
+      error('setupIntegralRule1D_weights::Unsupported value of OmegaId.');
+    end
+   otherwise
+    error(['setupIntegralRule1D_weights::unsupported ruleId']); 
+  end
+else
+  if isa(Omega, 'function_handle') 
+    switch ruleId
+     case {1,2}
+      error(['setupIntegralRule1D_weights::function handle Omega is not supported' ...
+	   ' for ruleId=1,2.']); 
+     case {3,4,5,6}
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using user-supplied Omega(r)');
+      end
+      OmegaP = @(r)(Omega(r)*(abs(r)<=nonlocal.R));
+      OmegaM = @(r)(-Omega(-r)*(abs(r)<=nonlocal.R));
+     otherwise
+      error(['setupIntegralRule1D_weights::unsupported ruleId']); 
+    end
+  else
+    error(['setupIntegralRule1D_weights::supplied Omega is of unsupported' ...
+	   ' type.']); 
+  end
+end
+  
+% check value of M and define alpha
+alpha = nonlocal.R-(nonlocal.M-1)*nonlocal.h;
+if (alpha <= 0)
+  if (alpha < -eps)
+    disp(alpha)
+    error('setupIntegralRule1D_weights::computed value of alpha is <= 0.');
+  else
+    disp(['setupIntegralRule1D_weights::adjusted value of alpha from slightly' ...
+	  ' negative to 1e-20.']);
+    alpha=1e-20;
+  end
+end
+if (alpha > nonlocal.h)
+  if (alpha-eps > nonlocal.h)
+    disp(alpha-nonlocal.h);
+    error('setupIntegralRule1D_weights::computed value of alpha is > h.');
+  else
+    disp(['setupIntegralRule1D_weights::adjusted value of alpha from just above' ... 
+	  ' h to h.']);
+    alpha = nonlocal.h;
+  end
+end
+if (ruleId == 1)
+  if (alpha+(nonlocal.M-1)*nonlocal.h ~= nonlocal.R)
+    disp(alpha+(nonlocal.M-1)*nonlocal.h - nonlocal.R)
+    error('setupIntegralRule1D_weights::computed value of M is wrong.');
+  end
+else
+  alpha = NaN; %we do not need the value of alpha
+end
+
+switch ruleId
+ case 1
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::exact integration, piecewise constant' ...
+	  ' reconstruction']);
+  end
+  nonlocal.lm= nonlocal.M-1;
+  nonlocal.lp= nonlocal.M;
+  if isa(Omega, 'function_handle') 
+    error(['setupIntegralRule1D_weights::function handle Omega not supported' ...
+	   ' for ruleId=1.']);
+  else % OmegaId is set
+    switch OmegaId
+     case 1
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using constant Omega(r)');
+      end
+      nonlocal.weights = h*[-ones(1,nonlocal.lm+1) ones(1,nonlocal.lp)];
+      nonlocal.weights(1) = -alpha;
+      nonlocal.weights(end) = alpha;
+      nonlocal.weights = nonlocal.weights/(2*(nonlocal.R^2));
+     case 2
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using linearly decaying Omega(r)');
+      end
+      nonlocal.weights = h*[-ones(1,nonlocal.lm+1) ones(1,nonlocal.lp)] ...
+	  +(1-2*[-nonlocal.lm:nonlocal.lp])/(2*nonlocal.R)*(nonlocal.h^2);
+      nonlocal.weights(1) = -alpha+(alpha-2*(-nonlocal.lm)*nonlocal.h)...
+	  *alpha/(2*nonlocal.R);
+      nonlocal.weights(end) = alpha+(2*nonlocal.h-alpha-2*nonlocal.lp*nonlocal.h)...
+	  *alpha/(2*nonlocal.R);
+      nonlocal.weights = nonlocal.weights/(nonlocal.R^2);
+     otherwise
+      error('setupIntegralRule1D_weights::Unsupported value of OmegaId.');
+    end
+  end
+ 
+ case 2
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::exact integration, piecewise linear' ...
+	  ' reconstruction']);
+  end
+  nonlocal.lm= nonlocal.M;
+  nonlocal.lp= nonlocal.M+1;
+  nonlocal.weights = zeros(1,nonlocal.lm+nonlocal.lp+1);
+  if isa(Omega, 'function_handle') 
+    error(['setupIntegralRule1D_weights::function handle Omega not supported' ...
+	   ' for ruleId=2.']);
+  else % OmegaId is set
+    switch OmegaId
+     case 1
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using constant Omega(r)');
+      end
+      for i=1:length(nonlocal.weights)
+	nonlocal.weights(i) = computeWeight(i-(nonlocal.lm+1), R, h, ...
+					    @Imconst, @Ipconst);
+      end
+     case 2
+      if (verboseLevel>0)
+	disp('setupIntegralRule1D_weights::Using linearly decaying Omega(r)');
+      end
+      for i=1:length(nonlocal.weights)
+	nonlocal.weights(i) = computeWeight(i-(nonlocal.lm+1), R, h, ...
+					    @Imdecay, @Ipdecay); 
+      end
+     otherwise
+      error('setupIntegralRule1D_weights::Unsupported value of OmegaId.');
+    end
+  end
+  
+ case 3
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::midpoint rule, piecewise constant' ...
+	  ' reconstruction']);
+  end
+  % OmegaP and OmegaM are already setup.
+  nonlocal.lm= nonlocal.M-1;
+  nonlocal.lp= nonlocal.M;
+  nonlocal.NR= varargin{1};
+  %hR = nonlocal.R/nonlocal.NR; % do not use hR: could be
+  %contaminated with rounding errors which destroyes computations
+  %of weights!!
+  nonlocal.weights = zeros(1,nonlocal.lm+nonlocal.lp+1);
+  xi = (nonlocal.lm+4.5)*nonlocal.h;
+ 
+  %xvals=[0:1:(nonlocal.lm+9+nonlocal.lp)]*h;
+  % xi is in [xvals(nonlocal.lm+5),xvals(nonlocal.lm+6))
+  %xi-xvals(nonlocal.lm+5)
+  %xvals(nonlocal.lm+6)-xi
+  
+  for j=-nonlocal.NR:(nonlocal.NR-1)
+    r = ((j+0.5)/nonlocal.NR)*nonlocal.R; % instead of r = (j+0.5)*hR to avoid trouble
+    if (r<0)
+      Omegar = OmegaM(r);
+    elseif (r>0)
+      Omegar = OmegaP(r);
+    else
+      error('Omega called with r=0.')
+    end
+    x = xi + 0.5*nonlocal.h + r;
+    % find nonzero basis function (there is only one!) and its value at x,
+    % that is determine l such that x \in xi+l*h+[-h/2,h/2) <==>
+    % (x-xi)/h+1/2 \in l + [0,1), that is l is the floor() of the lhs.
+    l = floor((x-xi)/nonlocal.h+0.5);
+    if ~(((x-xi)>=(l-0.5)*nonlocal.h-eps)*((x-xi)<(l+0.5)*nonlocal.h+eps))
+      [(x-xi) (l-0.5)*nonlocal.h (l+0.5)*nonlocal.h]
+      error('wrong basis function')
+    end
+    Phix = 1;
+    % Update weight
+    nonlocal.weights(l+nonlocal.lm+1) = ...
+	nonlocal.weights(l+nonlocal.lm+1)+Phix*Omegar;
+  end
+  nonlocal.weights = nonlocal.weights/nonlocal.NR; % avoid hR again
+
+ case 4
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::midpoint rule, piecewise linear' ...
+	  ' reconstruction']);
+  end
+  % OmegaP and OmegaM are already setup.
+  nonlocal.lm= nonlocal.M-1+1;
+  nonlocal.lp= nonlocal.M+1;
+  nonlocal.NR= varargin{1};
+  %hR = nonlocal.R/nonlocal.NR; % do not use hR: could be
+  %contaminated with rounding errors which destroyes computations
+  %of weights!!
+  nonlocal.weights = zeros(1,nonlocal.lm+nonlocal.lp+1);
+  xi = (nonlocal.lm+4.5)*nonlocal.h;
+ 
+  for j=-nonlocal.NR:(nonlocal.NR-1)
+    r = ((j+0.5)/nonlocal.NR)*nonlocal.R; % instead of r = (j+0.5)*hR to avoid trouble
+    if (r<0)
+      Omegar = OmegaM(r);
+    elseif (r>0)
+      Omegar = OmegaP(r);
+    else
+      error('Omega called with r=0.')
+    end
+    x = xi + 0.5*nonlocal.h + r;
+    % find nonzero basis functions (there are at most two!) and their value
+    % at x, that is determine l such that x \in xi+l*h+h*[-1,1] and \in
+    % xi+(l+1)*h+h*[-1,1] <==> (x-xi)/h \in l + [0,1]
+    l1 = floor((x-xi)/nonlocal.h); % this is a first guess for l
+    % check that first guess
+    if ( ((x-xi)/nonlocal.h - l1 < 0) | ((x-xi)/nonlocal.h - l1 > 1) )
+      warning('reduce l1');
+      l1 = l1 - 1;  % this must be the correct value now
+    end
+    % check again
+    if ( ((x-xi)/nonlocal.h - l1 < 0) | ((x-xi)/nonlocal.h - l1 > 1) )
+      error('problem computing l1');
+    end
+    l2 = l1 + 1; % this is now the second l-value
+    % check both again
+    if ( ((x-xi)/nonlocal.h - l1 < -1) | ((x-xi)/nonlocal.h - l1 > 1) )
+      error('XX problem computing l1');
+    end
+    if ( ((x-xi)/nonlocal.h - l2 < -1) | ((x-xi)/nonlocal.h - l2 > 1) )
+      error('XX problem computing l2');
+    end
+    Phi1x = 1-abs(x-xi-l1*nonlocal.h)/nonlocal.h;
+    Phi2x = 1-abs(x-xi-l2*nonlocal.h)/nonlocal.h;
+    
+    % Update weights
+    nonlocal.weights(l1+nonlocal.lm+1) = ...
+	nonlocal.weights(l1+nonlocal.lm+1)+Phi1x*Omegar;
+    nonlocal.weights(l2+nonlocal.lm+1) = ...
+	nonlocal.weights(l2+nonlocal.lm+1)+Phi2x*Omegar;
+  end
+  nonlocal.weights = nonlocal.weights/nonlocal.NR; % avoid hR again
+
+ case 5
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::trapezoidal rule, piecewise constant' ...
+	  ' reconstruction']);  
+  end
+  error('RuleId=5 not implemented.')
+ 
+ case 6
+  if (verboseLevel>0)
+    disp(['setupIntegralRule1D_weights::trapezoidal rule, piecewise linear' ...
+	  ' reconstruction']);  
+  end
+  % OmegaP and OmegaM are already setup.
+  nonlocal.lm= nonlocal.M-1+1;
+  nonlocal.lp= nonlocal.M+1;
+  nonlocal.NR= varargin{1};
+  %hR = nonlocal.R/nonlocal.NR; % do not use hR: could be
+  %contaminated with rounding errors which destroyes computations
+  %of weights!!
+  nonlocal.weights = zeros(1,nonlocal.lm+nonlocal.lp+1);
+  xi = (nonlocal.lm+4.5)*nonlocal.h;
+  
+  for j=[-nonlocal.NR:-1 1:nonlocal.NR]
+    r = (j/nonlocal.NR)*nonlocal.R; % instead of r = j*hR to avoid trouble
+    if (r<0)
+      Omegar = OmegaM(r);
+    elseif (r>0)
+      Omegar = OmegaP(r);
+    else
+      error('Omega called with r=0.')
+    end
+    x = xi + 0.5*nonlocal.h + r;
+    % find nonzero basis functions (there are at most two!) and their value
+    % at x, that is determine l such that x \in xi+l*h+h*[-1,1] and \in
+    % xi+(l+1)*h+h*[-1,1] <==> (x-xi)/h \in l + [0,1]
+    l1 = floor((x-xi)/nonlocal.h); % this is a first guess for l
+    % check that first guess
+    if ( ((x-xi)/nonlocal.h - l1 < 0) | ((x-xi)/nonlocal.h - l1 > 1) )
+      warning('reduce l1');
+      l1 = l1 - 1;  % this must be the correct value now
+    end
+    % check again
+    if ( ((x-xi)/nonlocal.h - l1 < 0) | ((x-xi)/nonlocal.h - l1 > 1) )
+      error('problem computing l1');
+    end
+    l2 = l1 + 1; % this is now the second l-value
+    % check both again
+    if ( ((x-xi)/nonlocal.h - l1 < -1) | ((x-xi)/nonlocal.h - l1 > 1) )
+      error('XX problem computing l1');
+    end
+    if ( ((x-xi)/nonlocal.h - l2 < -1) | ((x-xi)/nonlocal.h - l2 > 1) )
+      error('XX problem computing l2');
+    end
+    Phi1x = 1-abs(x-xi-l1*nonlocal.h)/nonlocal.h;
+    Phi2x = 1-abs(x-xi-l2*nonlocal.h)/nonlocal.h;
+    
+    % Update weights
+    if (abs(j)==nonlocal.NR), fac = 0.5; else fac = 1; end;
+    nonlocal.weights(l1+nonlocal.lm+1) = ...
+	nonlocal.weights(l1+nonlocal.lm+1)+fac*Phi1x*Omegar;
+    nonlocal.weights(l2+nonlocal.lm+1) = ...
+	nonlocal.weights(l2+nonlocal.lm+1)+fac*Phi2x*Omegar;
+  end
+  nonlocal.weights = nonlocal.weights/nonlocal.NR; % avoid hR again
+  
+ otherwise
+  error('setupIntegralRule1D_weights:: unknown ruleId.');
+end
+
+% some debugging output
+if (debugging)
+  nonlocal
+  [(-nonlocal.lm:1:nonlocal.lp)' nonlocal.weights']
+  sum(nonlocal.weights)
+  [sum(nonlocal.weights(1:nonlocal.lm+1)) ...
+   sum(nonlocal.weights(nonlocal.lm+2:end))]
+end
+
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%%%      S U B F U N C T I O N S
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function wl = computeWeight(l,R,h,Im,Ip)
+%
+% compute weight w_l given l, R>0, and h>0 and Im and Ip are function
+% handles Im(l,r) = Im(l,R,h,r,pos), where pos==true when evaluation for
+% non-negative argument of Omega() and pos==false when the evaluation is
+% for a non-positive argument of Omega().
+wl = computeWeightIml(l,R,h,Im) + computeWeightIpl(l,R,h,Ip);
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Iml = computeWeightIml(l,R,h,Im)
+b = [-h,0]+(l-0.5)*h; % range of values for Omega evaluation
+if ((max(b)<=-R)+(min(b)>= R)), Iml = 0; return; end; % Omega identical zero
+b = [max(b(1),-R) min(b(2),R)]; % increase lower and reduce upper bound
+% now compute the definite integral Im(l)
+if (b(1)*b(2) >= 0) % range limits have same sign
+  if (b(1)>=0), flag = true; else flag = false; end;
+  Iml = Im(l,R,h,b(2)-(l-0.5)*h,flag) - Im(l,R,h,b(1)-(l-0.5)*h,flag);
+else                % range limits have different signs
+  Iml = Im(l,R,h,0-(l-0.5)*h,false) - Im(l,R,h,b(1)-(l-0.5)*h,false) ...
+	+ Im(l,R,h,b(2)-(l-0.5)*h,true) - Im(l,R,h,0-(l-0.5)*h,true);
+end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Ipl = computeWeightIpl(l,R,h,Ip)
+b = [0,h]+(l-0.5)*h; % range of values for Omega evaluation
+if ((max(b)<=-R)+(min(b)>= R)), Ipl = 0; return; end; % Omega identical zero
+b = [max(b(1),-R) min(b(2),R)]; % increase lower and reduce upper bound
+% now compute the definite integral Ip(l)
+if (b(1)*b(2) >= 0) % range limits have same sign
+  if (b(1)>=0), flag = true; else flag = false; end;
+  Ipl = Ip(l,R,h,b(2)-(l-0.5)*h,flag) - Ip(l,R,h,b(1)-(l-0.5)*h,flag);
+else                % range limits have different signs
+  Ipl = Ip(l,R,h,0-(l-0.5)*h,false) - Ip(l,R,h,b(1)-(l-0.5)*h,false) ...
+	+ Ip(l,R,h,b(2)-(l-0.5)*h,true) - Ip(l,R,h,0-(l-0.5)*h,true);
+end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Im = Imconst(l,R,h,r,pos)
+Im = r/(2*R^2)*(1+r/(2*h));
+if (~pos), Im = -Im; end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Ip = Ipconst(l,R,h,r,pos)
+Ip = r/(2*R^2)*(1-r/(2*h));
+if (~pos), Ip = -Ip; end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Im = Imdecay(l,R,h,r,pos)
+if (~pos), R=-R; end
+Im = r*(h^2*(6-12*l)-2*r*(2*r-3*R)-3*h*(r+2*l*r-4*R))/(12*h*R^3);
+if (~pos), Im=-Im; end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Ip = Ipdecay(l,R,h,r,pos)
+if (~pos), R=-R; end
+Ip = r*(h^2*(6-12*l)+2*r*(2*r-3*R)-3*h*(3*r+-2*l*r-4*R))/(12*h*R^3);
+if (~pos), Ip=-Ip; end
+return % end of function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

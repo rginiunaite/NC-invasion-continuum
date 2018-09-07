@@ -1,0 +1,84 @@
+-------------------------------------------------------------
+create_linux (current time stamp 20160707__12_10_21)
+ ...
+ ... we are running on          fb04681
+ ... using MATLABROOT directory /sw/matlab/matlab-9.0.0
+ ... building                   rowmap__fb04681_MatlabR2016a_20160707__12_10_21.mexa64
+ ... and storing output in      ./create_linux__fb04681_MatlabR2016a_mexa64_20160707__12_10_21.log
+
+
+ ... First build the fortran object rowmap.o using
+ ...  ... gfortran -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include" -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG ../src/rowmap.F -o rowmap.o
+
+
+ ... Now build the ROWMAP-mex-Interface
+
+Verbose mode is on.
+No MEX options file identified; looking for an implicit selection.
+... Looking for compiler 'gcc' ...
+... Executing command 'which gcc' ...Yes ('/sw/gcc/gcc-4.7.4/bin/gcc').
+... Executing command 'gcc -print-file-name=libstdc++.so' ...Yes ('/sw/gcc/gcc-4.7.4/lib64/libstdc++.so').
+Found installed compiler 'gcc'.
+Options file details
+-------------------------------------------------------------------
+	Compiler location: /sw/gcc/gcc-4.7.4/bin/gcc
+	Options file: /sw/matlab/matlab-9.0.0/bin/glnxa64/mexopts/gcc_glnxa64.xml
+	CMDLINE2 : /sw/gcc/gcc-4.7.4/bin/gcc -pthread -Wl,--no-undefined -Wl,-rpath-link,/sw/matlab/matlab-9.0.0/bin/glnxa64 -shared  -O -Wl,--version-script,"/sw/matlab/matlab-9.0.0/extern/lib/glnxa64/mexFunction.map" /tmp/mex_112735728105757_4609/rowmapM.o /tmp/mex_112735728105757_4609/options.o ./rowmap.o  -lmwblas  -lgfortran   -L"/sw/matlab/matlab-9.0.0/bin/glnxa64" -lmx -lmex -lmat -lm -lstdc++ -o /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.mexa64
+	CC : /sw/gcc/gcc-4.7.4/bin/gcc
+	DEFINES : -D_GNU_SOURCE -DMATLAB_MEX_FILE 
+	MATLABMEX : -DMATLAB_MEX_FILE 
+	CFLAGS : -ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread
+	INCLUDE : -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include"
+	COPTIMFLAGS : -O -DNDEBUG
+	CDEBUGFLAGS : -g
+	LD : /sw/gcc/gcc-4.7.4/bin/gcc
+	LDFLAGS : -pthread -Wl,--no-undefined -Wl,-rpath-link,/sw/matlab/matlab-9.0.0/bin/glnxa64
+	LDTYPE : -shared 
+	LINKEXPORT : -Wl,--version-script,"/sw/matlab/matlab-9.0.0/extern/lib/glnxa64/mexFunction.map"
+	LINKLIBS : -lmwblas  -lgfortran   -L"/sw/matlab/matlab-9.0.0/bin/glnxa64" -lmx -lmex -lmat -lm -lstdc++
+	LDOPTIMFLAGS : -O
+	LDDEBUGFLAGS : -g
+	OBJEXT : .o
+	LDEXT : .mexa64
+	SETENV : CC="/sw/gcc/gcc-4.7.4/bin/gcc"
+CXX="g++"
+CFLAGS="-ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE "
+CXXFLAGS="-ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE "
+COPTIMFLAGS="-O -DNDEBUG"
+CXXOPTIMFLAGS="-O -DNDEBUG"
+CDEBUGFLAGS="-g"
+CXXDEBUGFLAGS="-g"
+LD="/sw/gcc/gcc-4.7.4/bin/gcc"
+LDXX="g++"
+LDFLAGS="-pthread -Wl,--no-undefined -Wl,-rpath-link,/sw/matlab/matlab-9.0.0/bin/glnxa64 -shared  -lmwblas  -lgfortran   -L"/sw/matlab/matlab-9.0.0/bin/glnxa64" -lmx -lmex -lmat -lm -lstdc++ -Wl,--version-script,"/sw/matlab/matlab-9.0.0/extern/lib/glnxa64/mexFunction.map""
+LDDEBUGFLAGS="-g"
+	GCC : /sw/gcc/gcc-4.7.4/bin/gcc
+	CPPLIBS : /sw/gcc/gcc-4.7.4/lib64/libstdc++.so
+	MATLABROOT : /sw/matlab/matlab-9.0.0
+	ARCH : glnxa64
+	SRC : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/rowmapM.c;/home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/options.c
+	OBJ : /tmp/mex_112735728105757_4609/rowmapM.o;/tmp/mex_112735728105757_4609/options.o
+	OBJS : /tmp/mex_112735728105757_4609/rowmapM.o /tmp/mex_112735728105757_4609/options.o ./rowmap.o
+	SRCROOT : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/rowmapM
+	DEF : /tmp/mex_112735728105757_4609/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.def
+	EXP : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.exp
+	LIB : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.lib
+	EXE : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.mexa64
+	ILK : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.ilk
+	MANIFEST : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.mexa64.manifest
+	TEMPNAME : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21
+	EXEDIR : /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/
+	EXENAME : rowmap__fb04681_MatlabR2016a_20160707__12_10_21
+	OPTIM : -O -DNDEBUG
+	LINKOPTIM : -O
+	CMDLINE1_0 : /sw/gcc/gcc-4.7.4/bin/gcc -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include" -ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/rowmapM.c -o /tmp/mex_112735728105757_4609/rowmapM.o
+	CMDLINE1_1 : /sw/gcc/gcc-4.7.4/bin/gcc -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include" -ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/options.c -o /tmp/mex_112735728105757_4609/options.o
+-------------------------------------------------------------------
+Building with 'gcc'.
+/sw/gcc/gcc-4.7.4/bin/gcc -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include" -ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/rowmapM.c -o /tmp/mex_112735728105757_4609/rowmapM.o
+/sw/gcc/gcc-4.7.4/bin/gcc -c -D_GNU_SOURCE -DMATLAB_MEX_FILE  -I"/sw/matlab/matlab-9.0.0/extern/include" -I"/sw/matlab/matlab-9.0.0/simulink/include" -ansi -fexceptions -fPIC -fno-omit-frame-pointer -pthread -O -DNDEBUG /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/../src/options.c -o /tmp/mex_112735728105757_4609/options.o
+/sw/gcc/gcc-4.7.4/bin/gcc -pthread -Wl,--no-undefined -Wl,-rpath-link,/sw/matlab/matlab-9.0.0/bin/glnxa64 -shared  -O -Wl,--version-script,"/sw/matlab/matlab-9.0.0/extern/lib/glnxa64/mexFunction.map" /tmp/mex_112735728105757_4609/rowmapM.o /tmp/mex_112735728105757_4609/options.o ./rowmap.o  -lmwblas  -lgfortran   -L"/sw/matlab/matlab-9.0.0/bin/glnxa64" -lmx -lmex -lmat -lm -lstdc++ -o /home/gerisch/Matlab/rowmapmex-v0.93-20141028/build/rowmap__fb04681_MatlabR2016a_20160707__12_10_21.mexa64
+MEX completed successfully.
+
+ ... Done.
+-------------------------------------------------------------
