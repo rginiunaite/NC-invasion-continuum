@@ -24,8 +24,8 @@
 
 function [pij, terms] = ProbFTrans(i, j, params, varargin)
 
-t = varargin{1};
-Lt2 = domaingrowth(t,params)^2
+t = varargin{1}
+Lt2 = domaingrowth(t,params)^2;
 
 if ((i == params.eq.u) & (j == params.eq.u))
   pij = params.u_D/Lt2;
